@@ -1,0 +1,56 @@
+.process_bar {
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+
+.process_text {
+	margin-top: 5px;
+	margin-bottom: 5px;
+	overflow: hidden; 
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	width: 100%
+}
+
+.process_file_name {
+	margin-top: 5px;
+	margin-bottom: 5px;
+	overflow: hidden; 
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	width: 100%
+}
+
+/* .upload_btn{
+	width:120px; 
+	background-color:#3498db; 
+	color:#fff; 
+	border-radius:4px;
+	height: 34px;
+    line-height: 34px
+}
+
+.upload_hide_btn{
+	width:120px; 
+	height: 34px;
+	position:absolute; 
+	top:20px; 
+	opacity: 0; 
+	cursor:pointer;
+}
+ */
+ 
+.upload {
+	position: relative;
+	margin-bottom: 5px;
+}
+
+.upload .hide_btn {
+	width: 120px;
+	height: 120px;
+	position: absolute; 
+	left: 0; 
+	top:0; 
+	opacity: 0;
+	cursor: pointer;
+}

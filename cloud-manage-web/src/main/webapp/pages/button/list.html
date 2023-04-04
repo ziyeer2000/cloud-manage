@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+		
+		<link rel="stylesheet" type="text/css" href="/cloud-manage/layui/css/layui.css">
+		<link rel="stylesheet" type="text/css"  href="/cloud-manage/css/zTree/metroStyle/metroStyle.css">
+	</head>
+	
+	<body>
+		<input type="hidden" id="menuId" name="menuId">
+		<table id="dataGrid" lay-filter="dataGrid"></table>
+		
+		<script type="text/javascript" src="/cloud-manage/js/jquery/jquery-1.12.4.min.js"></script>
+		<script type="text/javascript" src="/cloud-manage/layui/layui.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/config.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/common.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/utils.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/layutils.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/role.js"></script>
+		
+		<script type="text/javascript">
+		layui.use(['form', 'table'], function(){
+			var table = layui.table;
+			var form = layui.form;
+			
+			$("#menuId").val(utils.getUrlParam("menuId"));
+			
+			form.render('select');
+			
+			layutils.datagrid.init({
+				id : 'dataGrid',
+				url : config.baseURL + 'button/findByMenuId?menuId=' + $("#menuId").val(),
+				height: 'full-20',
+				page: false,
+				cols : [[
+					{field: 'id', title: 'ID', hide: true, fixed: 'left'},
+					{field: 'menuId', title: '菜单ID', hide: true, fixed: 'left'},
+				    {field: 'name', title: '名称'},
+				    {field: 'event', title: '事件'},
+				    {field: 'seq', title: '排序'} ,
+				    {field: 'url', title: 'URL', width: 200} ,
+				    {field: 'type', title: '类型', templet: function(data){
+				    	var value = data.type;
+				    	if (value == '1') {
+							return "数据级";
+						} else {
+							return "全局";
+						}
+				    }} ,
+			      	{field: 'remark', title: '备注'}
+				]],
+				role: false,
+				operatorWidth: 120,
+				operator : {
+					add : {
+						name: '增加',
+						type: 2,
+						op : function() {
+							layutils.window('700px', '450px', '增加', config.baseURL + '/page/button/add?menuId=' + $("#menuId").val());
+						}
+					},
+					edit : {
+						name: '编辑',
+						type: 1,
+						op: function(data) {
+							layutils.window('700px', '450px', '编辑', config.baseURL + '/page/button/edit?id=' + data.id);
+						}
+					},
+					remove : {
+						name: '删除',
+						type: 1,
+						op: function(data) {
+							layutils.confirm('您确定要删除当前选中的数据吗？', function(){
+								$.ajax({
+									type : "POST",
+									async : false,
+									url : config.baseURL + 'button/remove',
+									dataType : "json",
+									data : {
+										"id" : data.id
+									},
+									success : function(data) {
+										layutils.message("删除成功");
+										reload();
+									}
+								});
+						    });
+						},
+						btnClass: 'layui-btn-danger layui-btn-xs'
+					}
+				}
+			});
+		});
+		
+		function reload() {
+			layutils.datagrid.reload('dataGrid');
+		}
+
+		</script>
+	</body>
+</html>	

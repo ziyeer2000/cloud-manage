@@ -1,0 +1,44 @@
+@charset "utf-8";
+
+body {
+    background-color: #f2f2f2;
+}
+ 
+.login-main {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 350px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.login-main .header {
+    margin-top: 150px;
+    height: 35px;
+    line-height: 35px;
+    font-size: 30px;
+    font-weight: 100;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.login-main .title {
+	font-weight: 300;
+	color: #999;
+	margin-bottom: 35px;
+}
+ 
+.login-main form, .login-main form .layui-input-inline {
+    margin-bottom: 15px;
+}
+ 
+.login-main form .layui-input-inline, .login-main form .layui-input-inline input, .login-main form .layui-input-inline button {
+    width: 100%;
+}
+ 
+.login-main form .login-btn {
+    margin-bottom: 5px;
+}

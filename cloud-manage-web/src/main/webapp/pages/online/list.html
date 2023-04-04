@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+		
+		<link rel="stylesheet" type="text/css" href="/cloud-manage/layui/css/layui.css">
+	</head>
+
+	<body>
+		<blockquote class="layui-elem-quote layui-text" >
+			<div class="layui-form">
+				用户ID：
+				<div class="layui-inline">
+					<input class="layui-input" id="userId" autocomplete="off">
+				</div>
+				
+				<button class="layui-btn" data-type="reload" id="search">搜索</button>
+			</div>
+		</blockquote>
+		
+		<table id="dataGrid" lay-filter="dataGrid"></table>
+		
+		<script type="text/javascript" src="/cloud-manage/js/jquery/jquery-1.12.4.min.js"></script>
+		<script type="text/javascript" src="/cloud-manage/layui/layui.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/config.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/common.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/utils.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/role.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/layutils.js"></script>
+		
+		<script type="text/javascript">
+		layui.use(['form', 'table'], function(){
+			var table = layui.table;
+			var form = layui.form;
+			
+			layutils.datagrid.init({
+				id : 'dataGrid',
+				url : config.baseURL + 'online/findPage',
+				cols : [[
+					{field: 'sessionId', title: 'ID', hide: true, fixed: 'left'},
+				    {field: 'userId', title: '用户ID'},
+				    {field: 'userName', title: '用户名'},
+				    {field: 'ip', title: 'ip'},
+				    {field: 'remember', title: '是否记住密码', templet: function(data){
+				    	var value = data.remember;
+				    	if (value) {
+				    		return "是";
+						} else {
+							return "否";
+						}
+				    }},
+				    {field: 'createDate', title: '登录日期', templet: function(data){
+				    	var value = data.createDate;
+				    	if (value) {
+				    		return utils.dateFormatSec(new Date(value), '-');
+						} else {
+							return "";
+						}
+				    }}
+				]],
+				operatorWidth: 100,
+				operator : {
+					offline : {
+						op: function(data) {
+							
+							if (data.remember) {
+								layutils.error('记住密码用户无法强制下线!');
+								return ;
+							}
+							
+							layutils.confirm('确定强制下线该用户吗？', function() {
+								$.ajax({
+							        type: "POST",
+							        url: config.baseURL + "online/offline",
+							        dataType: "json",
+							        data : {
+							        	"sessionId" : data.sessionId,
+							        	"userId" : data.userId
+							        },
+							        success: function(data){
+							        	layutils.message('操作成功');
+							        	search();
+							        }
+							    });
+							});
+						},
+						btnClass: 'layui-btn-danger layui-btn-xs'
+					}
+				} 
+			});
+			
+			$("#search").click(function() {
+				search();
+			});
+		});
+
+		function search() {
+			layutils.datagrid.search('dataGrid', {
+				userId: $("#userId").val()
+			});
+		}
+		</script>
+	</body>
+</html>

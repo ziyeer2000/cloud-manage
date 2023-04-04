@@ -1,0 +1,263 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>DEMO系统</title>
+
+<link rel="stylesheet" type="text/css" href="/cloud-manage/layui/css/layui.css">
+
+<style type="text/css">
+iframe{position:absolute;  height:100%; width:100%; border:none;}
+.layui-tab-item.layui-show{ animation:moveTop 1s; -webkit-animation:moveTop 1s; animation-fill-mode:both; -webkit-animation-fill-mode:both; position:relative; height:100%; -webkit-overflow-scrolling: touch; overflow:auto; }
+
+</style>
+</head>
+<body class="layui-layout-body">
+	<div class="layui-layout layui-layout-admin">
+		<div class="layui-header">
+			<div class="layui-logo">DEMO系统</div>
+			
+			<ul class="layui-nav layui-layout-right">
+				<li class="layui-nav-item">
+				<a href="javascript:;"> 
+					<img src="/cloud-manage/images/profile.png" class="layui-nav-img">
+					<span id="userNamePlace"></span>
+				</a>
+					<dl class="layui-nav-child">
+						<dd>
+							<a href="javascript:void(0);" id="changePasswordBtn">修改密码</a>
+						</dd>
+					</dl></li>
+				<li class="layui-nav-item"><a href="javascript:void(0);" id="logoutBtn">退出</a></li>
+			</ul>
+		</div>
+
+		<div class="layui-side layui-bg-black">
+			<div class="layui-side-scroll">
+				
+				<ul class="layui-nav layui-nav-tree" lay-shrink="all" lay-filter="menu" id="menuPlace">
+					
+				</ul>
+			</div>
+		</div>
+
+		<div class="layui-body" id="main">
+			<div class="layui-tab layui-tab-card" lay-filter="tab" lay-allowClose="true" style="margin: 0px;">
+			  <ul class="layui-tab-title">
+			    <li class="layui-this">首页</li>
+			  </ul>
+			  <div class="layui-tab-content" id="tab-content">
+			    <div class="layui-tab-item layui-show">v20200421</div>
+			  </div>
+			</div>
+		</div>
+
+		<div class="layui-footer">
+			© 版权
+		</div>
+		
+	</div>
+	
+	<div id="changePasswordWin" style="margin: 20px; display: none">
+		<div class="layui-form layui-form-pane">
+			<div class="layui-form-item">
+				<label class="layui-form-label">原始密码</label>
+				<div class="layui-input-block">
+		      		<input type="password" id="orgPassword" name="orgPassword" lay-verify="required" placeholder="请输入原始密码" autocomplete="off" class="layui-input">
+		    	</div>
+		  	</div>
+		  	
+		  	<div class="layui-form-item">
+				<label class="layui-form-label">新密码</label>
+				<div class="layui-input-block">
+		      		<input type="password" id="newPassword" name="newPassword" lay-verify="required|repassword" placeholder="请输入新密码" autocomplete="off" class="layui-input">
+		    	</div>
+		  	</div>
+		  	
+		  	<div class="layui-form-item">
+				<label class="layui-form-label">确认新密码</label>
+				<div class="layui-input-block">
+		      		<input type="password" id="newPasswordAgain" name="newPasswordAgain" lay-verify="required|repassword" placeholder="请再次输入新密码" autocomplete="off" class="layui-input">
+		    	</div>
+		  	</div>
+		  	
+		  	<div class="layui-form-item">
+			    <div class="layui-row" style="margin-top:30px;">
+					<button class="layui-btn layui-col-md2 layui-col-md-offset5" lay-submit lay-filter="submitChangePassword">提交</button>
+			    </div>
+		  	</div>
+		</div>
+	</div>
+	
+	<script type="text/javascript" src="/cloud-manage/js/jquery/jquery-1.12.4.min.js"></script>
+	<script type="text/javascript" src="/cloud-manage/layui/layui.js"></script>
+	<script type="text/javascript" src="/cloud-manage/js/common/config.js"></script>
+	<script type="text/javascript" src="/cloud-manage/js/common/common.js"></script>
+	<script type="text/javascript" src="/cloud-manage/js/common/layutils.js"></script>
+	<script>
+	//JavaScript代码区域
+	layui.use(['layer','element', 'form'], function(){
+		var element = layui.element;
+		var form = layui.form;
+
+		//高度处理
+		$("#tab-content").height($("#main").height() - 64);
+		
+		//菜单处理
+		$.ajax({
+	        type: "POST",
+	        url: config.baseURL + "menu/findMy?pid=1",
+	        dataType: "json",
+	        async:true, 
+	        data : {},
+	        success: function(data){
+	        	var _html = '';
+	        	
+	        	$.each(data.list, function(index, bean) {
+	        		_html += '<li class="layui-nav-item">';
+	        		_html += '<a menu-id="' + bean.id + '" class="" href="javascript:;">' + bean.text + '</a>';
+	        		if (bean.state == 'closed') {
+		        		_html += '<dl class="layui-nav-child">';
+		        		_html += '</dl>';
+	        		} 
+	        		_html += '</li>';
+	            });
+	        	
+	        	$("#menuPlace").html(_html);
+	        	
+	        	element.on('nav(menu)', function(elem){
+	        		var url = $(elem).attr("menu-url");
+	        		if (url) { //子菜单
+	        			var tabId = $(elem).attr("menu-id");
+	        			var li = $("li[lay-id="+tabId+"]").length;
+	        			if(li == 0){
+	        				element.tabAdd('tab', {
+	        					title: $(elem).text(),
+	        				  	content: '<iframe flag="content" src="' + url + '"></iframe>',
+	        				  	id: tabId
+	        				});	
+	        			}
+	        			
+	        			element.tabChange('tab', tabId); 
+	        		} else{ //父菜单
+	        			subMenu(elem);
+	        		}
+        		});
+	        	
+	        	element.render('nav', 'menu'); 
+	        	
+	        	$("#menuPlace a:first").click();
+	        }
+		});
+		
+		//登录信息
+		$.ajax({
+	        type: "POST",
+	        url: config.baseURL + "user/getUserInfo",
+	        dataType: "json",
+	        data : {},
+	        success: function(data){
+	        	$('#userNamePlace').html(data.user.realName);
+	        }
+	    });
+		
+		//自定义验证
+		form.verify({
+	        repassword:function(value){
+	            var password = $('#newPassword').val();
+	            var repassword = $('#newPasswordAgain').val();
+	            if(password && repassword && password != repassword){
+	                return '两次密码不一致';
+	            }
+	        }
+		});
+		
+		//修改密码框
+		$("#changePasswordBtn").click(function() {
+			layer.open({
+				type: 1,
+				title: '修改密码',
+			  	skin: 'layui-layer-rim',
+			  	area: ['420px', '295px'], 
+	            content: $("#changePasswordWin")
+			});
+		});
+		
+		//提交密码修改
+		form.on('submit(submitChangePassword)', function(data){
+		    $.ajax({
+		        type: "POST",
+		        url: config.baseURL + "user/changePassword",
+		        dataType: "json",
+		        data : data.field,
+		        success: function(data){
+		        	layutils.alert('密码修改成功,请重新登录', function(){
+	        		  	logout();
+	        		});
+		        }
+		    });
+		  	return false;
+		});
+		
+		//登出
+		$("#logoutBtn").click(function() {
+			layutils.confirm('您确定要登出系统吗？', function(){
+			  	logout();
+			});
+		});
+		
+		
+		//子菜单
+		function subMenu(elem) {
+			var dl = $(elem).parent().find('dl');
+    		if (dl.length != 0 && dl.html() == '') {
+    			//加载子菜单
+    			$.ajax({
+    		        type: "POST",
+    		        url: config.baseURL + "menu/findMy?pid=" + $(elem).attr("menu-id"),
+    		        dataType: "json",
+    		        async:true, 
+    		        data : {},
+    		        success: function(data){
+    		        	var _html = '';
+    		        	
+    		        	$.each(data.list, function(index, bean) {
+    		        		var pageUrl = config.baseURL + bean.attributes.url;
+    			        	if (pageUrl.indexOf("?") != -1) {
+    			        		pageUrl += "&menuId=" +bean.id;
+    			        	} else {
+    			        		pageUrl += "?menuId=" +bean.id;
+    			        	}
+    			        	
+    		        		_html += '<dd>';
+    		        		_html += '<a menu-id="' + bean.id + '" menu-url="' + pageUrl + '" href="javascript:;">' + bean.text + '</a>';
+    		        		_html += '</dd>';
+    		            });
+    		        	
+    		        	dl.append(_html);
+    		        	element.render('nav', 'menu'); 
+    		        }
+    		    });
+    		}
+		}
+		
+		//登出
+		function logout() {
+			
+			$.ajax({
+		        type: "POST",
+		        url: config.baseURL + "user/logout",
+		        dataType: "json",
+		        data : {
+		        },
+		        success: function(data){
+		        	location.href = data.redirectURL+"?t="+new Date().getTime();
+		        }
+		    });
+		}
+	  
+	});
+	</script>
+</body>
+</html>

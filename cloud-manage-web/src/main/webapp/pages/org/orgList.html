@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+    <link rel="stylesheet" type="text/css" href="/cloud-manage/layui/css/layui.css">
+    <link rel="stylesheet" type="text/css"  href="/cloud-manage/css/zTree/metroStyle/metroStyle.css">
+  </head>
+  
+  <body>
+    
+    <div class="layui-row" style="height: 100%">
+    	<div class="layui-col-md4" id="orgDiv">
+	    	<div style="overflow:auto; border: 1px solid #eee; height: 100%; margin-left: 10px;">
+				<ul id="orgTree" class="ztree"></ul>
+			</div>
+			
+	    </div>
+	    
+    	<div class="layui-col-md8" id="detailDiv">
+    		<div style="border: 1px solid #eee; height: 100%; margin-left: 10px;">
+				<div class="layui-form" style="margin: 5px; padding: 10px;">
+					<input type="hidden" id="id" name="id" >
+					<div class="layui-form-item">
+					    <label class="layui-form-label">父节点</label>
+					    <div class="layui-input-block">
+					    	<input type="text" id="parentName" name="parentName" readonly="readonly" class="layui-input layui-disabled" disabled>
+					    	<input type="hidden" id="parentId" name="parentId" >
+					    </div>
+					</div>
+					
+					<div class="layui-form-item">
+					    <label class="layui-form-label">名称</label>
+					    <div class="layui-input-block">
+					    	<input type="text"id="name" name="name" lay-verify="required" autocomplete="off" class="layui-input">
+					    </div>
+					</div>
+					
+					<div class="layui-form-item">
+					    <label class="layui-form-label">包含子节点</label>
+					    <div class="layui-input-block">
+					    	<select name="hasChild" id="hasChild">
+									<option value="0">否</option>
+									<option value="1">是</option>
+							</select>
+					    </div>
+					</div>
+					
+					<div class="layui-form-item">
+					    <label class="layui-form-label">备注</label>
+					    <div class="layui-input-block">
+					    	<textarea id="comments" name="comments" class="layui-textarea"></textarea>
+					    </div>
+					</div>
+			  
+					<div class="layui-form-item" style="text-align: center;">
+						<a class="layui-btn " lay-submit lay-filter="modify">编辑</a>
+						<a class="layui-btn " lay-submit lay-filter="add" style="display: none">新增</a>
+				  	</div>
+				</div>
+			</div>
+	    </div>
+    </div>
+    
+    <script type="text/javascript" src="/cloud-manage/js/jquery/jquery-1.12.4.min.js"></script>
+    <script type="text/javascript" src="/cloud-manage/layui/layui.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/common/config.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/common/common.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/common/utils.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/common/role.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/common/layutils.js"></script>
+	<script type="text/javascript" src="/cloud-manage/js/jquery/jquery.ztree.all-3.5.min.js"></script>
+    
+    <script type="text/javascript">
+    layui.use(['form', 'table'], function(){
+		var table = layui.table;
+      	var form = layui.form;
+      	
+      	$("#orgDiv").height(parent.$("div.layui-tab-item.layui-show iframe[flag='content']").height() - 10);
+      	$("#detailDiv").height(parent.$("div.layui-tab-item.layui-show iframe[flag='content']").height() - 10);
+		
+      	//组织架构
+      	var setting = {
+			async : {
+				enable : true,
+				url : config.baseURL + "org/getOrgTreeList",
+				autoParam : [ "id=pid"],
+				dataFilter : filter,
+				type : "get"
+			},
+			view : {
+				addHoverDom : addHoverDom,
+				removeHoverDom : removeHoverDom,
+				selectedMulti : false
+			},
+			edit : {
+				drag: {
+					isMove : false,
+					isCopy : false
+				},
+				enable : true,
+				removeTitle : '删除',
+				showRemoveBtn : showRemoveBtn,	
+				showRenameBtn : false
+			},
+			callback : {
+				onClick : clickNode,
+				beforeRemove : remove
+			}
+		};
+      	
+      	zTree = $.fn.zTree.init($("#orgTree"), setting);
+
+      	function filter(treeId, parentNode, childNodes) {
+			childNodes = childNodes.list;
+			
+			if (!childNodes)
+				return null;
+			for ( var i = 0, l = childNodes.length; i < l; i++) {
+				childNodes[i].name = childNodes[i].name.replace(/\.n/g, '.');
+			}
+			return childNodes;
+		}
+      	
+      	function cleanForm() {
+      		
+      		$("#id").val('');
+      		$("#parentName").val('');
+      		$("#parentId").val('');
+        	$("#name").val('');
+        	$("#comments").val('');    		
+        	$("#hasChild").find("option[value='0']").prop("selected",false);
+        	form.render('select');
+        	
+        	$('a[lay-filter="modify"]').hide();
+        	$('a[lay-filter="add"]').hide();
+      	}
+      	
+		function showAdd(treeNode) {
+			
+			cleanForm();
+        	
+			$("#parentName").val(treeNode.name);
+        	$("#parentId").val(treeNode.id);
+        	
+        	$('a[lay-filter="add"]').show();
+		}
+		
+		function showEdit(treeId, treeNode) {
+			cleanForm();
+			$('a[lay-filter="modify"]').show();
+			
+      		var orgId = treeNode.id;
+			var orgName = treeNode.name;
+	
+			var parent = treeNode.getParentNode();
+			if (parent) {
+				$("#parentName").val(parent.name);
+			} else {
+				$("#parentName").val('');
+			}
+			
+			$.ajax({
+		        type: "POST",
+		        url: config.baseURL + "org/findById",
+		        dataType: "json",
+		        data : {
+		            "id" : orgId
+		        },
+		        success: function(data){
+		        	var bean = data.bean;
+		        	
+		        	$("#id").val(bean.id);
+		        	$("#parentId").val(bean.parentId);
+		        	$("#name").val(bean.name);
+		        	$("#comments").val(bean.comments);
+		        	if (bean.hasChild) {
+			        	$("#hasChild").find("option[value='1']").prop("selected",true);
+		        	} else {
+		        		$("#hasChild").find("option[value='1']").prop("selected",false);
+		        	}
+		        	
+		        	form.render('select');
+		        }
+		    });
+			
+			var zTree = $.fn.zTree.getZTreeObj(treeId);
+			if (treeNode.isParent) {
+				zTree.expandNode(treeNode);
+			}
+		}
+      	
+      	function clickNode(event, treeId, treeNode) {
+			
+      		showEdit(treeId, treeNode);
+      	}
+      	
+      	function remove(treeId, treeNode) {
+			zTree.selectNode(treeNode, false);
+			showEdit(treeId, treeNode);
+			
+			var str;
+			if (treeNode.isParent) {
+				str = "确定删除["+treeNode.name+"]节点及其子节点吗？";
+			} else {
+				str = "确定删除["+treeNode.name+"]节点吗？";
+			}
+			layutils.confirm(str, function() {
+				
+				$.ajax({
+					type : "POST",
+					url : config.baseURL + "org/remove",
+					dataType : "json",
+					data : {
+						"id" : treeNode.id
+					},
+					success : function(data) {
+						cleanForm();
+		            	layutils.message('删除成功');
+		            	zTree.removeNode(treeNode);
+					}
+				});
+			});
+			
+			return false;
+		}
+      	
+      	function showRemoveBtn(treeId, treeNode) {
+			return treeNode.getParentNode() != null;
+		}
+	
+		function addHoverDom(treeId, treeNode) {
+			if (!treeNode.isParent) {
+				return;
+			}
+	
+			var sObj = $("#" + treeNode.tId + "_span");
+			if (treeNode.editNameFlag || $("#addBtn_" + treeNode.tId).length > 0)
+				return;
+			var addStr = "<span class='button add' id='addBtn_" + treeNode.tId + "' title='添加' onfocus='this.blur();'></span>";
+			sObj.after(addStr);
+			var btn = $("#addBtn_" + treeNode.tId);
+			var treeObj = $.fn.zTree.getZTreeObj(treeId);
+			if (btn) {
+				btn.bind("click", function() {
+					var treeNodeTid = this.id.replace(/addBtn_/, "");
+					var treeNode = treeObj.getNodeByTId(treeNodeTid);
+					showAdd(treeNode);
+					return false;
+				});
+			}
+		}
+	
+		function removeHoverDom(treeId, treeNode) {
+			$("#addBtn_" + treeNode.tId).unbind().remove();
+		}
+		
+		//信息编辑
+		form.on('submit(modify)',function (data) {
+	            
+            $.ajax({
+                url: config.baseURL + 'org/modify',
+                data: data.field,
+                dataType: 'json',
+                type: 'post',
+                success:function (data) {
+                	layutils.message('编辑成功');
+                	cleanForm();
+                	var zTree = $.fn.zTree.getZTreeObj("orgTree");
+					var node = zTree.getSelectedNodes()[0];
+	            	var parent = node.getParentNode();
+	            	zTree.reAsyncChildNodes(parent, "refresh", false);
+                }
+            })
+            
+            return false;
+        });
+		
+		form.on('submit(add)',function (data) {
+            
+            $.ajax({
+                url: config.baseURL + 'org/add',
+                data: data.field,
+                dataType: 'json',
+                type: 'post',
+                success:function (data) {
+                	layutils.message('新增成功');
+                	cleanForm();
+                	var zTree = $.fn.zTree.getZTreeObj("orgTree");
+					var node = zTree.getSelectedNodes()[0];
+	            	zTree.reAsyncChildNodes(node, "refresh", false);
+                }
+            })
+            
+            return false;
+        });
+		
+      	
+    });
+    
+    </script>
+  </body>
+</html> 

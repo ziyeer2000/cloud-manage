@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+    <link rel="stylesheet" type="text/css" href="/cloud-manage/layui/css/layui.css">
+    <link rel="stylesheet" type="text/css"  href="/cloud-manage/css/zTree/metroStyle/metroStyle.css">
+  </head>
+  
+  <body>
+    
+	<div class="layui-row">
+    	<div class="layui-col-md8" id="userDiv">
+    		<blockquote class="layui-elem-quote layui-text" >
+				<div class="layui-form" >
+					用户名:
+					<div class="layui-inline">
+					  <input class="layui-input" id="userName" autocomplete="off">
+					</div>
+					
+					姓名:
+					<div class="layui-inline">
+					  <input class="layui-input" id="realName" autocomplete="off">
+					</div>
+					
+					部门:
+					<div class="layui-inline">
+					  <input class="layui-input" id="orgName" autocomplete="off">
+					  <input type="hidden" name="orgId" id="orgId">
+					</div>
+					
+					<button class="layui-btn" data-type="reload" id="search">搜索</button>
+				</div>
+			</blockquote>
+			
+			<table id="dataGrid" lay-filter="dataGrid"></table>
+	    </div>
+	    
+	    <div class="layui-col-md4" id="roleDiv" style="border: 1px solid #eee;">
+	    	<div style="overflow:auto">
+				<ul id="roleTree" class="ztree"></ul>
+			</div>
+			
+			<div style="border-top: 1px solid #eee; text-align: center; padding-top:2px;">
+				<a href="javascript:void(0);" class="layui-btn" id="changeRole">提交修改</a>
+			</div>
+	    </div>
+    </div>
+    
+    <script type="text/javascript" src="/cloud-manage/js/jquery/jquery-1.12.4.min.js"></script>
+    <script type="text/javascript" src="/cloud-manage/layui/layui.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/common/config.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/common/common.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/common/utils.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/common/role.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/common/layutils.js"></script>
+	<script type="text/javascript" src="/cloud-manage/js/jquery/jquery.ztree.all-3.5.min.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/selectTree.js"></script>
+    
+    <script type="text/javascript">
+    layui.use(['form', 'table'], function(){
+		var table = layui.table;
+      	var form = layui.form;
+      	var checkData = [];
+		
+      	//用户
+      	layutils.datagrid.init({
+			id : 'dataGrid',
+			url : config.baseURL + 'user/findPage',
+			cols : [[
+				{field: 'id', title: 'ID', hide: true, fixed: 'left'},
+			    {field: 'userName', title: '用户名'},
+			    {field: 'realName', title: '姓名'},
+			    {field: 'orgName', title: '部门'}
+			]],
+			operatorWidth: 180,
+			operator : {
+				changePassword : {
+					op : function(data) {
+						layutils.window('700px', '240px', '修改密码-' + data.userName, config.baseURL + '/page/user/changePassword?id=' + data.id);
+					},
+					btnClass: 'layui-btn-danger layui-btn-xs'
+				},
+				add : {
+					op : function(data) {
+						layutils.window('700px', '300px', '增加', config.baseURL + '/page/user/add');
+					}
+				},
+				edit : {
+					op: function(data) {
+						layutils.window('700px', '300px', '编辑-' + data.userName, config.baseURL + '/page/user/edit?id=' + data.id);
+					}
+				},
+				remove : {
+					op: function(data) {
+						
+						layutils.confirm('您确定要删除当前选中的数据吗？', function(){
+							$.ajax({
+								type : "POST",
+								async : false,
+								url : config.baseURL + 'user/remove',
+								dataType : "json",
+								data : {
+									"id" : data.id
+								},
+								success : function(data) {
+									layutils.message("删除成功");
+									layutils.datagrid.reload('dataGrid');
+								}
+							});
+					    });
+					},
+					btnClass: 'layui-btn-danger layui-btn-xs'
+				}
+			}, 
+			done: function() {
+				$("#roleDiv").height($("#userDiv").height() - 12);
+				$("#roleDiv div:first").height($("#roleDiv").height() - 42);
+				refreshTree();
+			},
+			rowClick: function(data, checked) {
+				refreshTree();
+			}
+		});
+      	
+      	$("#search").click(function() {
+      		search();
+		});
+      	
+      	$("#orgName").click(function() {
+			selectTree.init("orgName", 0, "org/getOrgTreeList", function(ids, names) {
+				$("#orgName").val(names[0]);
+				$("#orgId").val(ids[0]);
+			});
+		});
+      	
+      	//角色
+      	var setting = {
+   			async : {
+   				enable : true,
+   				url : config.baseURL + "role/ztree/all/check",
+   				autoParam : [ "id=pid"],
+   				dataFilter : zTreefilter,
+   				type : "get"
+   			},
+   			check : {
+   				enable : true,
+   				chkStyle : "checkbox",
+   				chkboxType: { "Y": "ps", "N": "s" }
+   			},
+   			view : {
+   				dblClickExpand : false,
+   				selectedMulti : true
+   			},
+			callback : {
+				onClick : zTreeOnClick
+			}
+   		};
+         	
+      	$("#changeRole").click(function() {
+      		submit();
+      	});
+      	
+      	$.fn.zTree.init($("#roleTree"), setting);
+      	
+      	function zTreeOnClick(event, treeId, treeNode) {
+			var zTree = $.fn.zTree.getZTreeObj(treeId);
+			if (treeNode.isParent) {
+				zTree.expandNode(treeNode);
+			} else {
+				zTree.checkNode(treeNode);
+			}
+		}
+      	
+      	function zTreefilter(treeId, parentNode, childNodes) {
+			childNodes = childNodes.list;
+			if (!childNodes) {
+				return null;
+			} else {
+				var zTree = $.fn.zTree.getZTreeObj(treeId);
+				$.each(childNodes, function(i, node) {
+					if (node.name) {
+						node.name = node.name.replace(/\.n/g, '.');
+						node.checked = false;
+						
+						$.each(checkData, function(index, value) {
+						    if (value == node.id) {
+						    	node.checked = true;
+						    }
+					    });
+					}
+				});
+				
+				return childNodes;
+			}
+		}
+      	
+      	function refreshTree() {
+			var row = layutils.datagrid.getSelect('dataGrid');
+			checkData = [];
+			
+			if (row) {
+				$.ajax({
+			        type: "POST",
+			        url: config.baseURL + "role/findByUserId",
+			        dataType: "json",
+					cache : false,
+					async : false,
+			        data : {
+			            "userId" : row.id
+			        },
+			        success: function(data){ 
+			        	$.each(data.list, function(index, value) {
+			        		checkData.push(value.id);
+			            });
+			        }
+			    });
+				
+				var treeObj = $.fn.zTree.getZTreeObj("roleTree");
+				treeObj.reAsyncChildNodes(null, "refresh");
+				
+			} else {
+				$.fn.zTree.init($("#roleTree"), setting);
+			}
+		}
+      	
+      	function submit() {
+			var row = layutils.datagrid.getSelect('dataGrid');
+			if (row) {
+				layutils.confirm('确定提交角色修改吗？', function() {
+					var roleIds = [];
+					$.each($.fn.zTree.getZTreeObj("roleTree").getCheckedNodes(true), function(index, value) {
+						roleIds.push(value.id);
+				    });
+					
+					$.ajax({
+				        type: "POST",
+				        url: config.baseURL + "user/changeUserRole",
+				        dataType: "json",
+				        data : {
+				        	"userId" : row.id,
+							"roleIds" : roleIds.join(",")
+				        },
+				        success: function(data){
+				        	refreshTree();
+				        	layutils.message('修改成功');
+				        }
+				    });
+				});
+				
+			} else {
+				layutils.error('您还未选择角色!');
+			}
+		}
+      	
+    });
+    
+    function search() {
+  		layutils.datagrid.search('dataGrid', {
+  			userName: $("#userName").val(),
+  			realName: $("#realName").val(),
+  			orgId: $("#orgId").val()
+		})
+	}
+    </script>
+  </body>
+</html> 

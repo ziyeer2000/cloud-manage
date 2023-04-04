@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.cloud.manage.dao.AreaDao">
+
+	<select id="findByCondition" resultType="org.cloud.manage.model.Area" parameterType="org.cloud.manage.model.vo.AreaQuery">
+		select * from t_area t 
+		
+		<where>
+			<if test="level != null ">  
+				AND t.level = #{level} 
+			</if>
+			
+			<if test="parentId != null ">  
+				AND t.parent_id = #{parentId} 
+			</if>
+			
+			<if test="isValid != -1">
+				and t.is_valid = #{isValid}
+			</if>
+			
+			<if test="name != null ">  
+				AND t.name like  CONCAT('%', #{name}, '%')
+			</if>
+		</where> 
+		
+		<if test="orderByField != null">
+			order by ${orderField}
+		</if>
+	</select>
+	
+</mapper>

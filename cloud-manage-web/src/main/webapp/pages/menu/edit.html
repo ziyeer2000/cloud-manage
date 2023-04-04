@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+		
+		<link rel="stylesheet" type="text/css" href="/cloud-manage/layui/css/layui.css">
+		<link rel="stylesheet" type="text/css"  href="/cloud-manage/css/zTree/metroStyle/metroStyle.css">
+	</head>
+	
+	<body>
+		<div class="layui-form" style="border: 1px solid #eee; margin: 5px; padding: 10px;">
+			<input type="hidden" name="id" id="id">
+			
+			<div class="layui-form-item">
+			    <label class="layui-form-label">名称</label>
+			    <div class="layui-input-block">
+			    	<input type="text" id="name" name="name" lay-verify="required" autocomplete="off" class="layui-input">
+			    </div>
+			</div>
+			
+			<div class="layui-form-item">
+			    <label class="layui-form-label">URL</label>
+			    <div class="layui-input-block">
+			    	<input type="text" id=url name="url" autocomplete="off" class="layui-input">
+			    </div>
+			</div>
+			
+			<div class="layui-form-item">
+			    <label class="layui-form-label">父菜单</label>
+			    <div class="layui-input-block">
+			    	<input type="text" readonly="readonly" id="superName" name="superName" lay-verify="required" autocomplete="off" class="layui-input">
+				  	<input type="hidden" id="superId" name="superId">
+			    </div>
+			</div>
+			
+			<div class="layui-form-item">
+			    <label class="layui-form-label">包含子菜单</label>
+			    <div class="layui-input-block">
+			    	<input type="radio" name="hasChild" value="1" title="是">
+      				<input type="radio" name="hasChild" value="0" title="否" checked>
+			    </div>
+			</div>
+			
+			<div class="layui-form-item">
+			    <label class="layui-form-label">排序</label>
+			    <div class="layui-input-block">
+			    	<input type="number" id="seq" name="seq" lay-verify="required" class="layui-input" onkeyup="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')">
+			    </div>
+			</div>
+			
+			<div class="layui-form-item" id="ajaxUrlPlace">
+			    <label class="layui-form-label">AJAX URL</label>
+			    
+			    <div class="layui-input-block">
+			    	<div class="layui-inline" style="width: 85%;">
+			    		<input type="text" autocomplete="off" class="layui-input">
+				    </div>
+				    <div class="layui-inline" style="width: 10%;">
+			    		<a class="layui-btn" lay-filter="addAjaxUrl">增加</a>
+				    </div>
+			    </div>
+			</div>
+			
+			<div class="layui-form-item">
+			    <label class="layui-form-label">备注</label>
+			    <div class="layui-input-block">
+			    	<textarea id="comments" name="comments" class="layui-textarea"></textarea>
+			    </div>
+			</div>
+	  
+			<div class="layui-form-item" style="text-align: center;">
+				<a class="layui-btn " lay-submit lay-filter="modify">提交</a>
+		  	</div>
+		</div>
+		
+		<script type="text/javascript" src="/cloud-manage/js/jquery/jquery-1.12.4.min.js"></script>
+		<script type="text/javascript" src="/cloud-manage/layui/layui.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/config.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/common.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/utils.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/layutils.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/jquery/jquery.ztree.all-3.5.min.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/selectTree.js"></script>
+		
+		<script type="text/javascript">
+		layui.use(['form'], function(){
+			var form = layui.form;
+			
+			$('a[lay-filter="addAjaxUrl"]').click(function() {
+				var _addAjaxHtml = '';
+				_addAjaxHtml += '<div class="layui-input-block">';
+				_addAjaxHtml += '	<div class="layui-inline" style="width: 85%;">';
+				_addAjaxHtml += '		<input type="text" autocomplete="off" class="layui-input">';
+				_addAjaxHtml += '    </div>';
+				_addAjaxHtml += '    <div class="layui-inline" style="width: 10%;">';
+				_addAjaxHtml += '		<a class="layui-btn layui-btn-danger" lay-filter="removeAjaxUrl">删除</a>';
+				_addAjaxHtml += '    </div>';
+				_addAjaxHtml += '</div>';
+				
+				_addAjaxHtml = $(_addAjaxHtml);
+				_addAjaxHtml.find('a[lay-filter="removeAjaxUrl"]').click(function() {
+					$(this).parent().parent().remove();
+				});
+				
+				$("#ajaxUrlPlace").append(_addAjaxHtml);
+			});
+			
+			$.ajax({
+		        type: "POST",
+		        url: config.baseURL + "menu/findById",
+		        dataType: "json",
+		        data : {
+		            "id" : utils.getUrlParam("id")
+		        },
+		        success: function(data){
+		        	var bean = data.bean;
+		        	
+		        	$("#id").val(bean.id);
+		        	$("#superId").val(bean.superId);
+		        	$("#name").val(bean.name);
+		        	$("#url").val(bean.url);
+		        	$("#superName").val(bean.superName);
+		        	$('#seq').val(bean.seq);
+		        	$("#comments").val(bean.comments);
+		        	
+		        	if (bean.hasChild) {
+		        		$("input:radio[name='hasChild'][value='1']").attr("checked","checked");
+		        	} else {
+		        		$("input:radio[name='hasChild'][value='0']").attr("checked","checked");
+		        	}
+		        	
+		        	if (bean.ajaxUrls) {
+			        	$.each(bean.ajaxUrls.split(","), function(index, value) {
+			        		if (index != 0) {
+			        			$('a[lay-filter="addAjaxUrl"]').click();
+			        		}
+			        		$('#ajaxUrlPlace input[type="text"]').last().val(value);
+			            });
+		        	}
+		        	form.render();
+		        }
+		    });
+			
+			
+			form.on('submit(modify)',function (data) {
+	        	
+	        	var ajaxUrl = [];
+	            $("#ajaxUrlPlace input").each(function() {
+	            	var url = $(this).val();
+	            	if (url) {
+		            	ajaxUrl.push(url);
+	            	}
+	            });
+	            data.field.ajaxUrls = ajaxUrl.join(",");
+	            
+	            $.ajax({
+	                url: config.baseURL + 'menu/modify',
+	                data: data.field,
+	                dataType: 'json',
+	                type: 'post',
+	                success:function (data) {
+	                	layutils.messageTop('编辑成功');
+	                	layutils.closeWindow();
+	        		  	parent.reload();
+	                }
+	            })
+	            
+	            return false;
+	        })
+			
+			$("#superName").click(function() {
+				selectTree.initMenuRadio("superName", function(ids, names) {
+					$("#superName").val(names[0]);
+					$("#superId").val(ids[0]);
+				});
+			});
+		});
+
+		</script>
+	</body>
+</html>

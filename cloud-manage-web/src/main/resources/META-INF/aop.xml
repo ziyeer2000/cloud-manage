@@ -1,0 +1,15 @@
+<!DOCTYPE aspectj PUBLIC "-//AspectJ//DTD//EN" "aspectj.dtd">
+<aspectj>
+	<weaver options="-showWeaveInfo -XmessageHandlerClass:org.springframework.aop.aspectj.AspectJWeaverMessageHandler">
+		<include within="org.cloud..*" />
+	</weaver>
+	<aspects>
+		<aspect name="org.cloud.interceptor.TokenInterceptor" />
+        <aspect name="org.cloud.interceptor.LoginInterceptor" />
+        <aspect name="org.cloud.interceptor.RoleUrlInterceptor" />
+        <aspect name="org.cloud.interceptor.RoleInterceptor" />
+        <aspect name="org.cloud.interceptor.ValidateCodeIntercept" />
+        <aspect name="org.cloud.interceptor.CheckBelongToMeInterceptor" />
+        <aspect name="org.cloud.interceptor.AspectSystemArchitecture" />
+	</aspects>
+</aspectj>

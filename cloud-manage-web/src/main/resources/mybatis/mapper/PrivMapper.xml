@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.cloud.manage.dao.PrivDao">
+	
+	<insert id="addPrivMenu">
+		insert into T_PRIV_MENU
+		  (PRIV_ID, DATA_ID, TYPE)
+		values
+		<foreach collection="list" item="bean" index="index" separator="," > 
+	      (#{bean.privId}, #{bean.dataId}, #{bean.type})
+	    </foreach> 
+	</insert>
+	
+	<delete id="deletePrivMenuByPrivId" parameterType="long">
+		delete from T_PRIV_MENU where priv_id = #{privId}
+	</delete>
+	
+	<select id="findByRoleId" parameterType="long" resultType="org.cloud.manage.model.Priv">
+		select b.* from t_role_priv a, t_priv b where a.priv_id = b.id and a.role_id = #{roleId}
+	</select>
+	
+	<delete id="deletePrivMenuByMenuId">
+		delete from T_PRIV_MENU where data_id = #{dataId} and type = #{type}
+	</delete>
+	
+</mapper>

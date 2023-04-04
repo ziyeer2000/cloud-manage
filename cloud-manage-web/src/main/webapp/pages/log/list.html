@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+		
+		<link rel="stylesheet" type="text/css" href="/cloud-manage/layui/css/layui.css">
+	</head>
+
+	<body>
+		<blockquote class="layui-elem-quote layui-text" >
+			<div class="layui-form">
+				类型：
+				<div class="layui-inline">
+					<select id="type" lay-verify="" >
+						<option value="">全部</option>
+					    <option value="登录">登录</option>
+					</select> 
+				</div>
+				
+				日期：
+				<div class="layui-inline">
+				  <input class="layui-input" id="createDateStart" autocomplete="off">
+				</div>
+				--
+				<div class="layui-inline">
+				  <input class="layui-input" id="createDateEnd" autocomplete="off">
+				</div>
+				
+				<button class="layui-btn" data-type="reload" id="search">搜索</button>
+				
+			</div>
+		</blockquote>
+		
+		<table id="dataGrid" lay-filter="dataGrid"></table>
+		
+		<script type="text/javascript" src="/cloud-manage/js/jquery/jquery-1.12.4.min.js"></script>
+		<script type="text/javascript" src="/cloud-manage/layui/layui.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/config.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/common.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/utils.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/role.js"></script>
+		<script type="text/javascript" src="/cloud-manage/js/common/layutils.js"></script>
+		
+		<script type="text/javascript">
+		layui.use(['form', 'table', 'laydate'], function(){
+			var table = layui.table;
+			var form = layui.form;
+			var laydate = layui.laydate;
+			
+			form.render('select');
+			
+			layutils.initDatePickerRange(laydate, 'createDateStart', 'createDateEnd');
+			
+			layutils.datagrid.init({
+				id : 'dataGrid',
+				url : config.baseURL + 'log/findPage',
+				cols : [[
+					{field: 'id', title: 'ID', hide: true, fixed: 'left'},
+				    {field: 'userName', title: '用户名称'},
+				    {field: 'ip', title: 'ip'},
+				    {field: 'type', title: '类型'} ,
+				    {field: 'createDate', title: '创建日期', templet: function(data){
+				    	var value = data.createDate;
+				    	if (value) {
+				    		return utils.dateFormatSec(new Date(value), '-');
+						} else {
+							return "";
+						}
+				    }},
+			      	{field: 'remark', title: '备注'}
+				]]
+			});
+			
+			$("#search").click(function() {
+				layutils.datagrid.search('dataGrid', {
+					type: $("#type").val(),
+					createDateStart: $("#createDateStart").val(),
+					createDateEnd: $("#createDateEnd").val()
+				})
+			});
+		});
+
+		</script>
+	</body>
+</html>

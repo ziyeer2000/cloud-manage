@@ -1,0 +1,51 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+	<meta charset="UTF-8">
+	
+	<link type="text/css" rel="stylesheet" href="/cloud-manage/plugin/upload/layui/css/layui.css">
+	<link type="text/css" rel="stylesheet" href="/cloud-manage/plugin/upload/css/upload.css"/>
+
+</head>
+<body>
+	<table style="margin: auto;">
+		<tr>
+   			<td>图片:</td>
+   			<td>
+   				<div class="upload">
+					<img id="uploadImg" src="/cloud-manage/plugin/upload/images/upload_img.jpg" width="120" height="120" style="border: 1px solid #c5d0d8;"/>
+					<input type="file" id="uploadImgBtn" class="hide_btn" multiple></input>
+	   				<input type="hidden" name="pic"  id="pic" />
+   				</div>
+   			</td>
+		</tr>
+    </table>
+    
+    <script type="text/javascript" src="/cloud-manage/js/common/config.js"></script>
+	<script type="text/javascript" src="/cloud-manage/js/jquery/jquery-1.12.4.min.js"></script>
+	<script type="text/javascript" src="/cloud-manage/js/jquery/jquery-ui.min.js"></script>
+	<script type="text/javascript" src="/cloud-manage/plugin/upload/js/jquery.fileupload.js"></script>
+	<script type="text/javascript" src="/cloud-manage/layui/layui.js"></script>
+	
+	<script type="text/javascript" src="/cloud-manage/plugin/upload/js/uploadConfig.js"></script>
+	<script type="text/javascript" src="/cloud-manage/plugin/upload/js/upload.js"></script>
+	
+	<script>
+		layui.use(['element', 'layer'], function(){
+			
+			upload.upload(
+				$("#uploadImgBtn"), 
+				null,
+				function(data) {
+					var file = data.fileList[0];
+					var fileUrl = "/cloud-manage-storage/" + file.fileRelative;
+					var img = $("#uploadImg");
+					img.attr("src", fileUrl);
+					$("#pic").val(file.fileRelative);
+				}, 
+				upload.commonCheckUploadFile
+			);
+		});
+	</script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.cloud.manage.dao.OrgDao">
+	
+	<select id="findByParentId" resultType="org.cloud.manage.model.Org">
+		select * from t_org t where t.parent_id = #{pid} 
+		<if test="hasChild != null">
+			<choose>
+				<when test="hasChild">
+					and t.HAS_CHILD = 1
+				</when>
+				<otherwise>
+					and t.HAS_CHILD = 0
+				</otherwise>
+			</choose>
+		</if>
+		order by t.id desc
+	</select>	
+	
+	<select id="findByParentIdPage" resultType="org.cloud.manage.model.Org">
+		select * from t_org t where t.parent_id = #{pid} order by t.id desc
+	</select>
+	
+	<delete id="delete">
+		delete from t_org where id = #{id}
+	</delete>
+	
+	<select id="findById" resultType="org.cloud.manage.model.Org" parameterType="long">
+		select * from t_org t where t.id = #{id}
+	</select>
+	
+	<update id="update">
+		update t_org
+		   set name = #{name},
+		       parent_id = #{parentId},
+		       has_child = #{hasChild},
+		       comments = #{comments}
+		 where id = #{id}
+	</update>
+	
+	<insert id="add" useGeneratedKeys="true" keyProperty="id">
+		insert into t_org
+		  (name, parent_id, create_date, has_child, comments)
+		values
+		  (#{name}, #{parentId}, #{createDate}, #{hasChild}, #{comments})
+	</insert>
+</mapper>

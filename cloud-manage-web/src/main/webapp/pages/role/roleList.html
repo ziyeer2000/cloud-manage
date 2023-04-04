@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+    <link rel="stylesheet" type="text/css" href="/cloud-manage/layui/css/layui.css">
+    <link rel="stylesheet" type="text/css"  href="/cloud-manage/css/zTree/metroStyle/metroStyle.css">
+  </head>
+  
+  <body>
+    
+	<div class="layui-row">
+    	<div class="layui-col-md8" id="roleDiv">
+    		<blockquote class="layui-elem-quote layui-text" >
+				<div class="layui-form" >
+					名称:
+					<div class="layui-inline">
+					  <input class="layui-input" id="name" autocomplete="off">
+					</div>
+					
+					<button class="layui-btn" data-type="reload" id="search">搜索</button>
+				</div>
+			</blockquote>
+			
+			<table id="dataGrid" lay-filter="dataGrid"></table>
+	    </div>
+	    
+	    <div class="layui-col-md4" id="privDiv" style="border: 1px solid #eee;">
+	    	<div style="overflow:auto">
+				<ul id="privTree" class="ztree"></ul>
+			</div>
+			
+			<div style="border-top: 1px solid #eee; text-align: center; padding-top:2px;">
+				<a href="javascript:void(0);" class="layui-btn" id="changeRolePriv">提交修改</a>
+			</div>
+	    </div>
+    </div>
+    
+    <script type="text/javascript" src="/cloud-manage/js/jquery/jquery-1.12.4.min.js"></script>
+    <script type="text/javascript" src="/cloud-manage/layui/layui.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/common/config.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/common/common.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/common/utils.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/common/role.js"></script>
+    <script type="text/javascript" src="/cloud-manage/js/common/layutils.js"></script>
+	<script type="text/javascript" src="/cloud-manage/js/jquery/jquery.ztree.all-3.5.min.js"></script>
+    
+    <script type="text/javascript">
+    layui.use(['form', 'table'], function(){
+		var table = layui.table;
+      	var form = layui.form;
+      	var checkData = [];
+		
+      	//角色
+      	layutils.datagrid.init({
+			id : 'dataGrid',
+			url : config.baseURL + 'role/findPage',
+			cols : [[
+				{field: 'id', title: 'ID', hide: true, fixed: 'left'},
+			    {field: 'name', title: '角色名称'},
+		      	{field: 'comments', title: '备注'}
+			]],
+			operatorWidth: 160,
+			operator : {
+				add : {
+					op : function(data) {
+						layutils.window('700px', '300px', '增加', config.baseURL + '/page/role/add');
+					}
+				},
+				edit : {
+					op: function(data) {
+						layutils.window('700px', '300px', '编辑-' + data.name, config.baseURL + '/page/role/edit?id=' + data.id);
+					}
+				},
+				remove : {
+					op: function(data) {
+						
+						layutils.confirm('您确定要删除当前选中的数据吗？', function(){
+							$.ajax({
+								type : "POST",
+								async : false,
+								url : config.baseURL + 'role/remove',
+								dataType : "json",
+								data : {
+									"id" : data.id
+								},
+								success : function(data) {
+									layutils.message("删除成功");
+									layutils.datagrid.reload('dataGrid');
+								}
+							});
+					    });
+					},
+					btnClass: 'layui-btn-danger layui-btn-xs'
+				}
+			}, 
+			done: function() {
+				$("#privDiv").height($("#roleDiv").height() - 12);
+				$("#privDiv div:first").height($("#privDiv").height() - 42);
+				refreshTree();
+			},
+			rowClick: function(data, checked) {
+				refreshTree();
+			}
+		});
+      	
+      	$("#search").click(function() {
+      		search();
+		});
+      	
+      	//权限
+      	var setting = {
+   			async : {
+   				enable : true,
+   				url : config.baseURL + "priv/ztree/all/check",
+   				autoParam : [ "id=pid"],
+   				dataFilter : zTreefilter,
+   				type : "get"
+   			},
+   			check : {
+   				enable : true,
+   				chkStyle : "checkbox",
+   				chkboxType: { "Y": "ps", "N": "s" }
+   			},
+   			view : {
+   				dblClickExpand : false,
+   				selectedMulti : true
+   			},
+			callback : {
+				onClick : zTreeOnClick
+			}
+   		};
+         	
+      	$("#changeRolePriv").click(function() {
+      		submit();
+      	});
+      	
+      	$.fn.zTree.init($("#privTree"), setting);
+      	
+      	function zTreeOnClick(event, treeId, treeNode) {
+			var zTree = $.fn.zTree.getZTreeObj(treeId);
+			if (treeNode.isParent) {
+				zTree.expandNode(treeNode);
+			} else {
+				zTree.checkNode(treeNode);
+			}
+		}
+      	
+      	function zTreefilter(treeId, parentNode, childNodes) {
+			childNodes = childNodes.list;
+			if (!childNodes) {
+				return null;
+			} else {
+				var zTree = $.fn.zTree.getZTreeObj(treeId);
+				$.each(childNodes, function(i, node) {
+					if (node.name) {
+						node.name = node.name.replace(/\.n/g, '.');
+						node.checked = false;
+						
+						$.each(checkData, function(index, value) {
+						    if (value == node.id) {
+						    	node.checked = true;
+						    }
+					    });
+					}
+				});
+				
+				return childNodes;
+			}
+		}
+      	
+      	function refreshTree() {
+			var row = layutils.datagrid.getSelect('dataGrid');
+			checkData = [];
+			
+			if (row) {
+				$.ajax({
+			        type: "POST",
+			        url: config.baseURL + "priv/findByRoleId",
+			        dataType: "json",
+					cache : false,
+					async : false,
+			        data : {
+			            "roleId" : row.id
+			        },
+			        success: function(data){ 
+			        	$.each(data.list, function(index, value) {
+			        		checkData.push(value.id);
+			            });
+			        }
+			    });
+				
+				var treeObj = $.fn.zTree.getZTreeObj("privTree");
+				treeObj.reAsyncChildNodes(null, "refresh");
+				
+			} else {
+				$.fn.zTree.init($("#privTree"), setting);
+			}
+		}
+      	
+      	function submit() {
+			var row = layutils.datagrid.getSelect('dataGrid');
+			if (row) {
+				layutils.confirm('确定提交角色权限修改吗？', function() {
+					var privIds = [];
+					$.each($.fn.zTree.getZTreeObj("privTree").getCheckedNodes(true), function(index, value) {
+						privIds.push(value.id);
+				    });
+					
+					$.ajax({
+				        type: "POST",
+				        url: config.baseURL + "role/changeRolePriv",
+				        dataType: "json",
+				        data : {
+				        	"roleId" : row.id,
+							"privIds" : privIds.join(",")
+				        },
+				        success: function(data){
+				        	refreshTree();
+				        	layutils.message('修改成功');
+				        }
+				    });
+				});
+				
+			} else {
+				layutils.error('您还未选择角色!');
+			}
+		}
+      	
+    });
+    
+    function search() {
+  		layutils.datagrid.search('dataGrid', {
+			name: $("#name").val()
+		})
+	}
+    </script>
+  </body>
+</html> 

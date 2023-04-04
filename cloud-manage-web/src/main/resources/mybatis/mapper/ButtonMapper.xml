@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.cloud.manage.dao.ButtonDao">
+	
+	<select id="findByPrivId" parameterType="long" resultType="org.cloud.manage.model.Button">
+		select b.* from t_priv_menu a, t_button b where a.data_id = b.id and a.priv_id = #{privId} and a.type = 2
+	</select>
+	
+	<select id="findByRoleId" parameterType="long" resultType="org.cloud.manage.model.Button">
+		select
+			distinct m.*
+		from
+			T_ROLE_PRIV b,
+			T_PRIV_MENU c,
+			T_BUTTON m
+		where
+			b.priv_id = c.priv_id
+			and c.data_id = m.id
+			and m.url is not null
+			and m.url != ''
+			and b.role_id = #{roleId}
+			and c.type = 2
+	</select>
+	
+	<select id="findByUserIdAndMenuId" resultType="org.cloud.manage.model.Button">
+		select
+			distinct m.*
+		from
+			T_USER_ROLE a,
+			T_ROLE_PRIV b,
+			T_PRIV_MENU c,
+			T_BUTTON m
+		where
+			a.user_id = #{userId}
+			and a.role_id = b.role_id
+			and b.priv_id = c.priv_id
+			and c.data_id = m.id
+			and c.type = 2
+			and m.menu_id = #{menuId}
+		order by
+			m.seq
+	</select>
+	
+</mapper>

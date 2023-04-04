@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	
+	<link type="text/css" rel="stylesheet" href="/cloud-manage/layui/css/layui.css">
+	<link type="text/css" rel="stylesheet" href="/cloud-manage/plugin/upload/css/upload.css"/>
+</head>
+<body>
+    <table style="margin: auto;">
+		<tr>
+   			<tr>
+    			<td>内容:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+    			<td>
+    				<textarea type="text" name="content" id="content" style="height:310px; width: 600px;">
+    				</textarea>
+    			</td>
+    		</tr>
+    		<tr align="center">
+    			<td colspan="2">
+    				<input type="button" id="getArea" value="确定">
+    			</td>
+    		</tr>
+		</tr>
+    </table>
+    
+    <script type="text/javascript" src="/cloud-manage/js/common/config.js"></script>
+	<script type="text/javascript" src="/cloud-manage/js/jquery/jquery-1.12.4.min.js"></script>
+	<script type="text/javascript" src="/cloud-manage/layui/layui.js"></script>
+    <script type="text/javascript" src="/cloud-manage/plugin/richeditor/ckeditor/ckeditor.js"></script>
+    
+    <script type="text/javascript" src="/cloud-manage/plugin/richeditor/js/richeditorConfig.js"></script>
+	<script type="text/javascript" src="/cloud-manage/plugin/richeditor/js/richeditor.js"></script>
+	<script>
+	
+	layui.use(['element', 'layer'], function(){
+		$("#content").text('额外热舞乐网热无');
+		richeditor.init('content', function(json) {
+			return {
+				 fileName: json.fileList[0].originalFileName,
+				 url: "/cloud-manage-storage/" + json.fileList[0].fileRelative
+			}
+		}, function() {
+			alert('完成编辑');
+		});
+	});
+	
+	$(function() {
+		$("#getArea").click(function() {
+			alert($('#content').val());
+		});
+	});
+	
+	</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.cloud.manage.dao.MenuDao">
+	
+	<select id="findPage" parameterType="org.cloud.manage.model.vo.MenuQuery" resultType="org.cloud.manage.model.Menu">
+		select a.*,(select name from T_MENU t where a.super_id=t.id) super_name from T_MENU a 
+		<where>
+			<if test="query.name != null ">  
+				AND a.name like CONCAT('%',CONCAT(#{query.name},'%'))
+			</if>
+			<if test="query.url != null ">  
+				AND a.url like CONCAT('%',CONCAT(#{query.url},'%'))
+			</if>
+			<if test="query.superId != null ">  
+				AND a.super_id = #{query.superId}
+			</if>
+			<if test="query.hasChild != null">  
+				<choose>
+					<when test="query.hasChild">
+						AND a.has_child=1
+					</when>
+					<otherwise>
+						AND a.has_child=0
+					</otherwise>
+				</choose>
+				
+			</if>
+		</where> 
+		
+		<if test="query.orderBySql != null">
+			order by ${query.orderBySql}
+		</if>
+	</select>
+	
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id">
+		insert into t_menu
+		  (NAME,
+		   URL,
+		   HAS_CHILD,
+		   COMMENTS,
+		   SUPER_ID,
+		   seq,
+		   ajax_urls)
+		values
+		  (#{name},
+		   #{url},
+		   #{hasChild},
+		   #{comments},
+		   #{superId},
+		   #{seq},
+		   #{ajaxUrls})
+	</insert>
+	
+	<select id="findById" parameterType="long" resultType="org.cloud.manage.model.Menu">
+		select t.* ,(select name from T_MENU a where a.id=t.super_id) super_name from T_MENU t where id = #{id}
+	</select>
+	
+	<update id="update">
+		update t_menu
+		   set name       = #{name},
+		       url        = #{url},
+		       super_id   = #{superId},
+		       has_child  = #{hasChild},
+		       comments   = #{comments},
+		       seq 		  = #{seq},
+		       ajax_urls  = #{ajaxUrls}
+		 where id = #{id}
+	</update>
+	
+	<delete id="delete">
+		delete from t_menu where id = #{id} 
+	</delete>
+	
+	<select id="findByPid" parameterType="long" resultType="org.cloud.manage.model.Menu">
+		select * from t_menu t where t.super_id = #{pid} order by t.seq  
+	</select>
+	
+	<select id="findByPidAndUserId" resultType="org.cloud.manage.model.Menu">
+		select distinct m.*
+		 from T_USER_ROLE a, T_ROLE_PRIV b, T_PRIV_MENU c, T_MENU m
+		 where a.user_id = #{userId}
+		   and a.role_id = b.role_id
+		   and b.priv_id = c.priv_id
+		   and c.data_id = m.id
+		   and m.super_id = #{pid}
+		   and c.type = 1
+		  order by m.seq   
+	</select>
+	
+	<select id="findByRoleId" parameterType="long" resultType="org.cloud.manage.model.Menu">
+		select
+			distinct m.*
+		from
+			T_ROLE_PRIV b,
+			T_PRIV_MENU c,
+			T_MENU m
+		where
+			b.priv_id = c.priv_id
+			and c.data_id = m.id
+			and m.url is not null
+			and m.url != ''
+			and b.role_id = #{roleId}
+			and c.type = 1
+	</select>
+	
+	<select id="findByPrivId" parameterType="long" resultType="org.cloud.manage.model.Menu">
+		select b.* from t_priv_menu a, t_menu b where a.data_id = b.id and a.priv_id = #{privId} and a.type = 1
+	</select>
+</mapper>

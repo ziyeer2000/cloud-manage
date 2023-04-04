@@ -1,0 +1,8 @@
+<!-- Tomcat context descriptor used for specifying a custom ClassLoader -->  
+<Context path="/cloud-manage" reloadable="false"> 
+ 
+    <!-- 使用spring代理Tomcat的类加载器(实现AspectJ LTW(运行时织入))
+    <Loader loaderClass="org.springframework.instrument.classloading.tomcat.TomcatInstrumentableClassLoader" useSystemClassLoaderAsParent="false"/>  
+    -->
+    
+</Context>  
